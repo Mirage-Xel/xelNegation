@@ -254,7 +254,6 @@ public class Negation : MonoBehaviour
 #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
-        yield return null;
         command = command.ToLowerInvariant();
         string[] commandArray = command.Split(' ');
         if (commandArray[0] != "press"||commandArray.Length != 4)
@@ -272,10 +271,12 @@ public class Negation : MonoBehaviour
             }
             if (commandArray[i] == "true")
             {
+                yield return null;
                 butTrue.OnInteract();
             }
             if (commandArray[i] == "false")
             {
+                yield return null;
                 butFalse.OnInteract();
             }
         }
