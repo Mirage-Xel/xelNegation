@@ -22,7 +22,7 @@ public class Negation : MonoBehaviour
         public bool truth;
     }
     public display[] displays = new display[3];
-    bool moduleSolved;
+    bool moduleSolved, hasStruck;
     int moduleId;
     static int moduleIdCounter = 1;
     // Use this for initialization
@@ -39,8 +39,10 @@ public class Negation : MonoBehaviour
             displays[i] = new display();
             displays[i].negationIndex = rnd.Range(0, 4);
             displays[i].statementIndex = rnd.Range(0, 16);
-            displayTexts[i].text = (negations[displays[i].negationIndex] + statements[displays[i].statementIndex]);
-            Debug.LogFormat("[Negation #{0}] Display {1} is {2}", moduleId, i+1, displayTexts[i].text);
+            displayTexts[i].text = "";
+            var toDisplay = negations[displays[i].negationIndex] + statements[displays[i].statementIndex];
+            StartCoroutine(TypeText(displayTexts[i], toDisplay));
+            Debug.LogFormat("[Negation #{0}] Display {1} is {2}", moduleId, i+1, toDisplay);
         }
         foreach (display display in displays)
         {
@@ -48,7 +50,16 @@ public class Negation : MonoBehaviour
         }
 		Debug.LogFormat("[Negation #{0}] The expected truth values are {1}, {2}, and {3}", moduleId, displays[0].truth, displays[1].truth, displays[2].truth);
     }
-
+    IEnumerator TypeText(TextMesh textToDisplay, string value)
+    {
+        yield return null;
+        for (int x = 0; x < value.Length; x++)
+        {
+            sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.TypewriterKey, transform);
+            textToDisplay.text = value.Substring(0, x + 1);
+            yield return new WaitForSeconds(0.05f);
+        }
+    }
     void handleDisplay(display display)
     {
         switch (display.statementIndex)
@@ -228,7 +239,8 @@ public class Negation : MonoBehaviour
             Debug.LogFormat("[Negation #{0}] You pressed the {1} button.", moduleId, but);
             if (but == displays[stageCounter].truth)
             {
-                if (stageCounter != 2)
+                displayTexts[stageCounter].text = "";
+                if (stageCounter < 2)
                 {
                     stageCounter++;
                     Debug.LogFormat("[Negation #{0}] That was correct.", moduleId);
@@ -239,18 +251,26 @@ public class Negation : MonoBehaviour
                     moduleSolved = true;
                     Debug.LogFormat("[Negation #{0}] Module solved.", moduleId);
                     sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+                    // Solve anim courtsey of VFlyer
+                    var solveText = new[] { "Xel's", "Nega", "tion" };
+                    for (int x = 0; x < displayTexts.Length; x++)
+                    {
+                        StartCoroutine(TypeText(displayTexts[x], solveText[x]));
+                    }
                 }
             }
             else
             {
+                hasStruck = true; // Tell the TP command to stop running the command since a strike is being received.
                 module.HandleStrike();
                 Debug.LogFormat("[Negation #{0}] That was incorrect. Strike", moduleId);
+                stageCounter = 0;
                 Start();
             }
         }
     }
 #pragma warning disable 414
-    private string TwitchHelpMessage = "Use '!{0} press true/false true/false true/false' to press the true and false buttons.";
+    private string TwitchHelpMessage = "Use \"!{0} press true/false true/false true/false\" to press the true and false buttons.";
 #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
@@ -261,7 +281,8 @@ public class Negation : MonoBehaviour
             yield return "sendtochaterror Invalid command.";
             yield break;
         }
-        for (int i = 0; i < commandArray.Length; i++)
+        hasStruck = false; // Set the value to false to allow the for-loop underneath to process.
+        for (int i = 0; i < commandArray.Length && !hasStruck; i++)
         {
             string[] validCommands = new string[3] { "press", "true", "false"};
             if (!validCommands.Contains(commandArray[i]))
@@ -279,24 +300,25 @@ public class Negation : MonoBehaviour
                 yield return null;
                 butFalse.OnInteract();
             }
+            yield return new WaitForSeconds(0.1f);
         }
-        yield return null;
+        yield break;
     }
     IEnumerator TwitchHandleForcedSolve()
     {
         yield return null;
-        foreach (display i in displays)
+        for (int i1 = stageCounter; i1 < displays.Length; i1++) // Only press based on what current stage it is on.
         {
+            display i = displays[i1];
             if (i.truth)
             {
+                yield return null;
                 butTrue.OnInteract();
             }
             else
             {
-                {
-                    yield return null;
-                    butFalse.OnInteract();
-                }
+                yield return null;
+                butFalse.OnInteract();
             }
         }
     }
