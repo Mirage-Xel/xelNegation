@@ -4,6 +4,8 @@ using System.Linq;
 using UnityEngine;
 using KModkit;
 using rnd = UnityEngine.Random;
+using System.Text.RegularExpressions;
+
 public class Negation : MonoBehaviour
 {
     public KMBombModule module;
@@ -235,7 +237,10 @@ public class Negation : MonoBehaviour
         if (!moduleSolved)
         {
             GetComponent<KMSelectable>().AddInteractionPunch(.5f);
-            sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, transform);
+            if (stageCounter < 2)
+                sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, transform);
+            else
+                sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
             Debug.LogFormat("[Negation #{0}] You pressed the {1} button.", moduleId, but);
             if (but == displays[stageCounter].truth)
             {
@@ -252,7 +257,7 @@ public class Negation : MonoBehaviour
                     Debug.LogFormat("[Negation #{0}] Module solved.", moduleId);
                     sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
                     // Solve anim courtsey of VFlyer
-                    var solveText = new[] { "Xel's", "Nega", "tion" };
+                    var solveText = new[] { "Nega", "tion", "DONE" };
                     for (int x = 0; x < displayTexts.Length; x++)
                     {
                         StartCoroutine(TypeText(displayTexts[x], solveText[x]));
@@ -264,24 +269,27 @@ public class Negation : MonoBehaviour
                 hasStruck = true; // Tell the TP command to stop running the command since a strike is being received.
                 module.HandleStrike();
                 Debug.LogFormat("[Negation #{0}] That was incorrect. Strike", moduleId);
+                StopAllCoroutines();
                 stageCounter = 0;
                 Start();
             }
         }
     }
 #pragma warning disable 414
-    private string TwitchHelpMessage = "Use \"!{0} press true/false true/false true/false\" to press the true and false buttons.";
+    private string TwitchHelpMessage = "Use \"!{0} press true/false true/false true/false\" to press the true and false buttons. Single letters may be substituted for true/false respectively.";
 #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
-        command = command.ToLowerInvariant();
+        command = command.Trim().ToLowerInvariant();
+        // Section commented out due to inefficiency
+        /*
         string[] commandArray = command.Split(' ');
         if (commandArray[0] != "press"||commandArray.Length != 4)
         {
             yield return "sendtochaterror Invalid command.";
             yield break;
         }
-        hasStruck = false; // Set the value to false to allow the for-loop underneath to process.
+        
         for (int i = 0; i < commandArray.Length && !hasStruck; i++)
         {
             string[] validCommands = new string[3] { "press", "true", "false"};
@@ -301,6 +309,33 @@ public class Negation : MonoBehaviour
                 butFalse.OnInteract();
             }
             yield return new WaitForSeconds(0.1f);
+        }
+        */
+        Match regexMatch = Regex.Match(command, @"^press(\s(T(rue)?|F(alse)?))+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (regexMatch.Success)
+        {
+            List<KMSelectable> buttonsToPress = new List<KMSelectable>();
+            foreach (string curValue in regexMatch.Value.Substring(5).Trim().Split())
+            {
+                Match trueMatch = Regex.Match(curValue, @"^t(rue)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                Match falseMatch = Regex.Match(curValue, @"^f(alse)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                if (trueMatch.Success)
+                    buttonsToPress.Add(butTrue);
+                else if (falseMatch.Success)
+                    buttonsToPress.Add(butFalse);
+                else
+                {
+                    yield return "sendtochaterror The specified value " + curValue + " is neither true nor false.";
+                    yield break;
+                }
+            }
+            hasStruck = false; // Set the value to false to allow the for-loop underneath to process.
+            for (int x = 0; !hasStruck && !moduleSolved && buttonsToPress.Count > x; x++) // Check if the module is not yet solved and the module has not struck yet.
+            {
+                yield return null;
+                buttonsToPress[x].OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
         }
         yield break;
     }
