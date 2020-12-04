@@ -237,7 +237,7 @@ GameObject:
   - component: {fileID: 114159852230441380}
   - component: {fileID: 114524298168511584}
   m_Layer: 0
-  m_Name: butFalse (2)
+  m_Name: butTrue (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -308,7 +308,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1676584249570910}
   m_LocalRotation: {x: -0, y: -0.22693169, z: 0, w: -0.9739107}
-  m_LocalPosition: {x: 0.0462, y: 0.0146, z: -0.0524}
+  m_LocalPosition: {x: 0.042, y: 0.0146, z: -0.055}
   m_LocalScale: {x: 0.067, y: 0.0019999999, z: 0.025}
   m_Children:
   - {fileID: 4226405483000392}
@@ -417,7 +417,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1791839980610620}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.8, z: 0}
+  m_LocalPosition: {x: 0, y: 0.73, z: 0}
   m_LocalScale: {x: 1.08, y: 1, z: 1.08}
   m_Children: []
   m_Father: {fileID: 4343820869848868}
@@ -484,7 +484,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1708437575621722}
   m_LocalRotation: {x: -0, y: -0.000000014901161, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.8, z: 0}
+  m_LocalPosition: {x: 0, y: 0.73, z: 0}
   m_LocalScale: {x: 1.08, y: 1, z: 1.08}
   m_Children: []
   m_Father: {fileID: 4202698517332222}
@@ -1240,7 +1240,7 @@ MonoBehaviour:
   - {fileID: 114093035171509752}
   - {fileID: 114425059025991962}
   IsPassThrough: 0
-  ChildRowLength: 1
+  ChildRowLength: 2
   Highlight: {fileID: 114126021173601642}
   SelectableColliders: []
   DefaultSelectableIndex: 0
@@ -1303,6 +1303,9 @@ MonoBehaviour:
   - {fileID: 102975003731649768}
   - {fileID: 102647042043437664}
   - {fileID: 102531046356992754}
+  buttonTexts:
+  - {fileID: 102638092278574866}
+  - {fileID: 102421005262473968}
 --- !u!114 &114434613996500564
 MonoBehaviour:
   m_ObjectHideFlags: 1
