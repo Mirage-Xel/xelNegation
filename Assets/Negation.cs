@@ -31,8 +31,13 @@ public class Negation : MonoBehaviour
         moduleId = moduleIdCounter++;
         butTrue.OnInteract += delegate () { pressBut(true); return false; };
         butFalse.OnInteract += delegate () { pressBut(false); return false; };
+        for (int i = 0; i < 3; i++)
+            displayTexts[i].text = "";
+        for (int i = 0; i < 2; i++)
+            buttonTexts[i].text = "";
         module.OnActivate += OnActivate;
     }
+
     void Start()
     {
         for (int i = 0; i < 3; i++)
@@ -40,11 +45,10 @@ public class Negation : MonoBehaviour
             displays[i] = new display();
             displays[i].negationIndex = rnd.Range(0, 4);
             displays[i].statementIndex = rnd.Range(0, 16);
-            displayTexts[i].text = "";
+            if (buttonTexts[0].text == "TRUE")
+                displayTexts[i].text = (negations[displays[i].negationIndex] + statements[displays[i].statementIndex]);
             Debug.LogFormat("[Negation #{0}] Display {1} is {2}", moduleId, i+1, displayTexts[i].text);
         }
-        for (int i = 0; i < 2; i++)
-            buttonTexts[i].text = "";
         foreach (display display in displays)
         {
             handleDisplay(display);
@@ -261,9 +265,10 @@ public class Negation : MonoBehaviour
             }
         }
     }
-#pragma warning disable 414
+
+    #pragma warning disable 414
     private string TwitchHelpMessage = "Use '!{0} press true/false true/false true/false' to press the true and false buttons.";
-#pragma warning restore 414
+    #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
         command = command.ToLowerInvariant();
@@ -304,13 +309,9 @@ public class Negation : MonoBehaviour
         for (int i = start; i < 3; i++)
         {
             if (displays[i].truth)
-            {
                 butTrue.OnInteract();
-            }
             else
-            {
                 butFalse.OnInteract();
-            }
             yield return new WaitForSeconds(0.1f);
         }
     }
