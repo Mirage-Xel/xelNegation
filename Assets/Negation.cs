@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using KModkit;
@@ -12,6 +11,7 @@ public class Negation : MonoBehaviour
     public KMSelectable butTrue;
     public KMSelectable butFalse;
     public TextMesh[] displayTexts;
+    public TextMesh[] buttonTexts;
     string[] negations = new string[] { "¬", "¬¬", "¬¬¬", "¬¬¬¬" };
     string[] statements = new string[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P" };
     int stageCounter;
@@ -31,7 +31,13 @@ public class Negation : MonoBehaviour
         moduleId = moduleIdCounter++;
         butTrue.OnInteract += delegate () { pressBut(true); return false; };
         butFalse.OnInteract += delegate () { pressBut(false); return false; };
+        for (int i = 0; i < 3; i++)
+            displayTexts[i].text = "";
+        for (int i = 0; i < 2; i++)
+            buttonTexts[i].text = "";
+        module.OnActivate += OnActivate;
     }
+
     void Start()
     {
         for (int i = 0; i < 3; i++)
@@ -39,7 +45,8 @@ public class Negation : MonoBehaviour
             displays[i] = new display();
             displays[i].negationIndex = rnd.Range(0, 4);
             displays[i].statementIndex = rnd.Range(0, 16);
-            displayTexts[i].text = (negations[displays[i].negationIndex] + statements[displays[i].statementIndex]);
+            if (buttonTexts[0].text == "TRUE")
+                displayTexts[i].text = (negations[displays[i].negationIndex] + statements[displays[i].statementIndex]);
             Debug.LogFormat("[Negation #{0}] Display {1} is {2}", moduleId, i+1, displayTexts[i].text);
         }
         foreach (display display in displays)
@@ -47,6 +54,14 @@ public class Negation : MonoBehaviour
             handleDisplay(display);
         }
 		Debug.LogFormat("[Negation #{0}] The expected truth values are {1}, {2}, and {3}", moduleId, displays[0].truth, displays[1].truth, displays[2].truth);
+    }
+
+    void OnActivate()
+    {
+        for (int i = 0; i < 3; i++)
+            displayTexts[i].text = (negations[displays[i].negationIndex] + statements[displays[i].statementIndex]);
+        buttonTexts[0].text = "TRUE";
+        buttonTexts[1].text = "FALSE";
     }
 
     void handleDisplay(display display)
@@ -224,7 +239,7 @@ public class Negation : MonoBehaviour
         if (!moduleSolved)
         {
             GetComponent<KMSelectable>().AddInteractionPunch(.5f);
-            sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, transform);
+            sound.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, but ? butTrue.transform : butFalse.transform);
             Debug.LogFormat("[Negation #{0}] You pressed the {1} button.", moduleId, but);
             if (but == displays[stageCounter].truth)
             {
@@ -245,13 +260,15 @@ public class Negation : MonoBehaviour
             {
                 module.HandleStrike();
                 Debug.LogFormat("[Negation #{0}] That was incorrect. Strike", moduleId);
+                stageCounter = 0;
                 Start();
             }
         }
     }
-#pragma warning disable 414
+
+    #pragma warning disable 414
     private string TwitchHelpMessage = "Use '!{0} press true/false true/false true/false' to press the true and false buttons.";
-#pragma warning restore 414
+    #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
         command = command.ToLowerInvariant();
@@ -269,35 +286,33 @@ public class Negation : MonoBehaviour
                 yield return "sendtochaterror Invalid command.";
                 yield break;
             }
-            if (commandArray[i] == "true")
-            {
-                yield return null;
-                butTrue.OnInteract();
-            }
-            if (commandArray[i] == "false")
-            {
-                yield return null;
-                butFalse.OnInteract();
-            }
         }
         yield return null;
+        for (int i = 0; i < commandArray.Length; i++)
+        {
+            if (commandArray[i] == "true")
+            {
+                butTrue.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+            else if (commandArray[i] == "false")
+            {
+                butFalse.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
     }
     IEnumerator TwitchHandleForcedSolve()
     {
         yield return null;
-        foreach (display i in displays)
+        int start = stageCounter;
+        for (int i = start; i < 3; i++)
         {
-            if (i.truth)
-            {
+            if (displays[i].truth)
                 butTrue.OnInteract();
-            }
             else
-            {
-                {
-                    yield return null;
-                    butFalse.OnInteract();
-                }
-            }
+                butFalse.OnInteract();
+            yield return new WaitForSeconds(0.1f);
         }
     }
 
